@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Real-Time Chat App</title>
+
+  <!-- React & Babel CDN -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <!-- Socket.IO CDN -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+      margin: 0;
+      padding: 0;
+    }
+
+    .chat-container {
+      max-width: 650px;
+      margin: 60px auto;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+    }
+
+    .chat-header {
+      background: linear-gradient(to right, #667eea, #764ba2);
+      color: white;
+      padding: 18px;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .chat-messages {
+      padding: 15px;
+      flex: 1;
+      overflow-y: auto;
+      background: #f5f7fa;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 2px solid #ddd;
+      background: #f0f0f0;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      background: #ffffff;
+    }
+
+    .chat-input button {
+      background: linear-gradient(to right, #43cea2, #185a9d);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .chat-input button:hover {
+      background: linear-gradient(to right, #34e89e, #0f3443);
+    }
+
+    .chat-message {
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 80%;
+      background-color: #e0eafc;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-message span {
+      font-weight: bold;
+      color: #5c67f2;
+    }
+
+    .chat-message.you {
+      background-color: #d1f7c4;
+      align-self: flex-end;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background-color: rgba(100, 100, 255, 0.3);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const socket = io("https://chat-app-server.glitch.me"); // Replace with your server URL
+
+    function ChatApp() {
+      const [messages, setMessages] = React.useState([]);
+      const [message, setMessage] = React.useState("");
+
+      React.useEffect(() => {
+        socket.on("message", (data) => {
+          setMessages((prev) => [...prev, data]);
+        });
+
+        return () => {
+          socket.off("message");
+        };
+      }, []);
+
+      const sendMessage = () => {
+        if (message.trim() !== "") {
+          const data = { user: "You", text: message };
+          socket.emit("message", data);
+          setMessages((prev) => [...prev, data]);
+          setMessage("");
+        }
+      };
+
+      return (
+        <div className="chat-container">
+          <div className="chat-header">💬 Real-Time Chat</div>
+          <div className="chat-messages">
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`chat-message ${msg.user === "You" ? "you" : ""}`}
+              >
+                <span>{msg.user}:</span> {msg.text}
+              </div>
+            ))}
+          </div>
+          <div className="chat-input">
+            <input
+              type="text"
+              value={message}
+              placeholder="Type a message..."
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            />
+            <button onClick={sendMessage}>Send 🚀</button>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<ChatApp />, document.getElementById("root"));
+  </script>
+</body>
+</html>
